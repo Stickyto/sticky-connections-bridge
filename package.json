@@ -1,0 +1,14 @@
+{
+  "name": "sticky-connections-bridge",
+  "version": "1.0.0",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "electron": "^36.5.0"
+  }
+}
