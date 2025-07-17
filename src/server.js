@@ -98,7 +98,7 @@ const TRIGGERS = new Map([
           }
           console.warn('[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] error', `[]${e.message}[]`)
         } finally {
-          await new Promise(_ => setTimeout(_, 5 * 1000))
+          await new Promise(_ => setTimeout(_, 1 * 1000))
         }
       }
 
