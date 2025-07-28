@@ -41,7 +41,7 @@ const TRIGGERS = new Map([
   [
     'CONNECTION_PAX',
     async (reqBody) => {
-      const { connectionConfig: [cTerminalAddress, cTerminalSerial, _cPairingCode, cAuthToken], howTo: { total, userPaymentId } } = reqBody
+      const { connectionConfig: [cTerminalAddress, cTerminalSerial, _cPairingCode, cAuthToken], howTo: { currency, total, userPaymentId } } = reqBody
 
       async function makeRequest(method, url, body) {
         const res = await fetch(
@@ -67,6 +67,7 @@ const TRIGGERS = new Map([
         `https://${cTerminalAddress}/POSitiveWebLink/1.0.0/transaction?tid=${cTerminalSerial}&silent=false`,
         {
           transType: 'SALE',
+          transCurrencyCode: currency,
           amountTrans: total,
           amountGratuity: 0,
           amountCashback: 0,
