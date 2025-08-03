@@ -1,6 +1,7 @@
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
 const PORT = 8090
+const ABSTRACT_WAIT_TIME = 60
 
 const express = require('express')
 const app = express()
@@ -55,14 +56,14 @@ const TRIGGERS = new Map([
             body: body ? JSON.stringify(body) : undefined
           }
         )
-        assert(res.status === 200 || res.status === 201, res.statusText.trim())
         console.warn(`[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] [makeRequest] res ${url}`, res)
-        const json = await res.json()
-        console.warn(`[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] [makeRequest] json ${url}`, json)
-        return json
+        assert(res.status === 200 || res.status === 201, `${res.statusText.trim()}.`)
+        const responseJson = await res.json()
+        console.warn(`[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] [makeRequest] responseJson ${url}`, responseJson)
+        return responseJson
       }
 
-      const json = await makeRequest(
+      const responseJson = await makeRequest(
         'POST',
         `https://${cTerminalAddress}/POSitiveWebLink/1.0.0/transaction?tid=${cTerminalSerial}&silent=false`,
         {
@@ -76,35 +77,34 @@ const TRIGGERS = new Map([
         }
       )
 
-      console.warn('[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] json', json)
-
       let wasSuccessful = false
-      for (let i = 0; i < 24; i++) {
+      for (let i = 0; i < ABSTRACT_WAIT_TIME; i++) {
         try {
-          console.warn('[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] loop', i)
-          const currentTransactionState = await makeRequest(
+          console.warn(`[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] loop: ${i} / ${ABSTRACT_WAIT_TIME} for ${cTerminalSerial} / ${responseJson.uti}`)
+          const currentPayment = await makeRequest(
             'GET',
-            `https://${cTerminalAddress}/POSitiveWebLink/1.0.0/transaction?tid=${cTerminalSerial}&uti=${json.uti}`
+            `https://${cTerminalAddress}/POSitiveWebLink/1.0.0/transaction?tid=${cTerminalSerial}&uti=${responseJson.uti}`
           )
-          console.warn('[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] currentTransactionState', currentTransactionState)
-          if (currentTransactionState.transApproved === true) {
+          console.warn('[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] currentPayment', currentPayment)
+          if (currentPayment.transCancelled === true) {
+            throw new Error('[INTERNAL] Sorry, the payment was cancelled.')
+          }
+          if (currentPayment.transApproved === true) {
             wasSuccessful = true
             break
-          } else {
-            throw new Error('[INTERNAL] Sorry, the transaction was cancelled')
           }
         } catch (e) {
+          console.warn('[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] caught GET error', e.message)
           if (e.message.startsWith('[INTERNAL]')) {
             throw new Error(e.message.substring('[INTERNAL] '.length))
           }
-          console.warn('[sticky-connections-bridge] [TRIGGER] [CONNECTION_PAX] error', `[]${e.message}[]`)
         } finally {
           await new Promise(_ => setTimeout(_, 1 * 1000))
         }
       }
 
       if (!wasSuccessful) {
-        throw new Error('Sorry, you ran out of time')
+        throw new Error('Sorry, the payment failed or you ran out of time.')
       }
 
       return {}
@@ -118,7 +118,7 @@ app.post('/trigger/:triggerId', async (req, res) => {
     console.warn('[sticky-connections-bridge] [TRIGGER] triggerId ->', triggerId)
 
     const foundTrigger = TRIGGERS.get(triggerId)
-    assert(foundTrigger, `There is no trigger called ${triggerId}`)
+    assert(foundTrigger, `There is no trigger called ${triggerId}.`)
 
     const r = await foundTrigger(req.body)
     res.json(r)
