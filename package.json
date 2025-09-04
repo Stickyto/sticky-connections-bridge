@@ -9,6 +9,6 @@
     "express": "^5.1.0"
   },
   "devDependencies": {
-    "electron": "^36.5.0"
+    "electron": "^36.8.1"
   }
 }
