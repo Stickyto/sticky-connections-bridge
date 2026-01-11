@@ -6,7 +6,7 @@
     "start": "electron ."
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.2.0"
   },
   "devDependencies": {
     "electron": "^36.5.0"
