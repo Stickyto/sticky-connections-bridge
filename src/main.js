@@ -1,25 +1,27 @@
 const { version } = require('../package.json')
+const { startServer } = require('./server')
 
-const { app, Tray, Menu, nativeImage } = require('electron')
-const path = require('path')
-require('./server')
+console.log(`[sticky-connections-bridge] [v${version}] Starting...`)
 
-let tray = null
-
-app.whenReady().then(() => {
-  const iconPath = path.join(__dirname, 'icon.png')
-  const icon = nativeImage.createFromPath(iconPath)
-
-  tray = new Tray(icon)
-  const contextMenu = Menu.buildFromTemplate([
-    { label: `Sticky Connections (${version})`, enabled: false },
-    { type: 'separator' },
-    { label: 'Quit', role: 'quit' }
-  ])
-  tray.setToolTip('Sticky Connections')
-  tray.setContextMenu(contextMenu)
+process.on('uncaughtException', err => {
+  console.error('[sticky-connections-bridge] Uncaught Exception:', err)
 })
 
-if (process.platform === 'darwin') {
-  app.dock.hide()
+process.on('unhandledRejection', err => {
+  console.error('[sticky-connections-bridge] Unhandled Rejection:', err)
+})
+
+const server = startServer()
+
+console.log(`[sticky-connections-bridge] [v${version}] Listening...`)
+
+function shutdown() {
+  console.log('[sticky-connections-bridge] Shutting down...')
+  server.close(() => {
+    console.log('[sticky-connections-bridge] Shutdown complete.')
+    process.exit(0)
+  })
 }
+
+process.on('SIGINT', shutdown)
+process.on('SIGTERM', shutdown)

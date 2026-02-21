@@ -1,14 +1,22 @@
 {
   "name": "sticky-connections-bridge",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "src/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "node src/main.js",
+    "build": "pkg . && mv sticky-connections-bridge-macos-arm64 dist/macos/sticky-connections-bridge-macos-arm64 && mv sticky-connections-bridge-win-x64.exe dist/windows/sticky-connections-bridge-win-x64.exe"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.2.1"
   },
   "devDependencies": {
-    "electron": "^36.5.0"
+    "pkg": "^5.8.1"
+  },
+  "bin": "src/main.js",
+  "pkg": {
+    "targets": [
+      "node18-win-x64",
+      "node18-macos-arm64"
+    ]
   }
 }
