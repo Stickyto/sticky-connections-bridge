@@ -1,0 +1,11 @@
+<service>
+  <id>StickyConnectionsBridge</id>
+  <name>Sticky Connections Bridge</name>
+  <description>Sticky Connections bridge</description>
+
+  <executable>sticky-connections-bridge-win-x64.exe</executable>
+
+  <logmode>roll</logmode>
+
+  <onfailure action="restart" delay="5 sec" />
+</service>
